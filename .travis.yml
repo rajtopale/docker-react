@@ -4,10 +4,10 @@ services:
   - docker
 
 before_install:
-  - docker build -t rajtopale/docker-react .
+  - docker build -t rajtopale/docker-react -f Dockerfile.dev .
 
 script:
-  - docker run -e CI=true rajtopale/docker-react yarn test --coverage
+  - docker run -e CI=true rajtopale/docker-react yarn test -- --coverage
 
 deploy:
   provider: elasticbeanstalk
