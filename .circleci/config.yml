@@ -1,0 +1,34 @@
+version: 2.1
+
+orbs:
+  aws-elastic-beanstalk: circleci/aws-elastic-beanstalk@2.0.0
+
+jobs:
+  build:
+    working_directory: ~/repo
+    environment:
+      IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
+    docker:
+      - image: cimg/base:2021.07
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.6
+          docker_layer_caching: true
+      - run: |
+          TAG=0.1.$CIRCLE_BUILD_NUM
+          docker build -t $IMAGE_NAME:$TAG .
+          echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+          docker push $IMAGE_NAME:$TAG
+
+workflows:
+  version: 2
+  build-master:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+
+
+
