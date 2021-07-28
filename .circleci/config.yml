@@ -41,6 +41,8 @@ workflows:
             branches:
               only:
                 - master
+          requires:
+            - prepare-docker-file
           
 
 
