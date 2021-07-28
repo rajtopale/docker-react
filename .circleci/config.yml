@@ -20,6 +20,9 @@ jobs:
                 }
               }
               EOF
+      - aws-s3/copy:
+          from: bucket/.dockercfg
+          to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react'
 
 workflows:
   version: 2
@@ -27,22 +30,13 @@ workflows:
     jobs:
       - shellcheck/check
       - prepare-docker-file:
+          context: AWS
           requires:
             - shellcheck/check
           filters:
             branches:
               only:
                 - master
-      - aws-s3/copy:
-          context: AWS
-          from: bucket/.dockercfg
-          to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react'
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - prepare-docker-file
           
 
 
