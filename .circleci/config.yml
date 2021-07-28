@@ -1,33 +1,47 @@
 version: 2.1
 
 orbs:
-  aws-elastic-beanstalk: circleci/aws-elastic-beanstalk@2.0.0
+  aws-s3: circleci/aws-s3@3.0.0
+  shellcheck: circleci/shellcheck@2.2.4
 
 jobs:
-  build:
-    working_directory: ~/repo
-    environment:
-      IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
+  prepare-docker-file:
     docker:
       - image: cimg/base:2021.07
     steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.6
-      - run: |
-          TAG=0.1.$CIRCLE_BUILD_NUM
-          docker build -t $IMAGE_NAME:$TAG .
-          echo $DOCKER_PASS | docker login registry.gitlab.com -u $DOCKER_USER --password-stdin
-          docker push $IMAGE_NAME:$TAG
+      - run: 
+          command: |
+            mkdir bucket && cat > bucket/.dockercfg <<EOF
+              {
+                "auths": {
+                  "https://registry.gitlab.com": {
+                    "auth": "$DOCKER_AUTH"
+                  }
+                }
+              }
+              EOF
 
 workflows:
   version: 2
-  build-master:
+  elastic-beanstalk-workflow:
     jobs:
-      - build:
+      - shellcheck/check
+      - prepare-docker-file:
+          requires:
+            - shellcheck/check
           filters:
             branches:
-              only: master
+              only:
+                - master
+      - aws-s3/copy:
+          context: AWS
+          from: bucket/.dockercfg
+          to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react'
+          filters:
+            branches:
+              only:
+                - master
+          
 
 
 
