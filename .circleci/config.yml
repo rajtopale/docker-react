@@ -11,7 +11,7 @@ jobs:
     steps:
       - run: 
           command: |
-            mkdir bucket && cat > bucket/.dockercfg <<EOF
+            mkdir bucket && cat > bucket/.dockercfg \<<EOF
               {
                 "auths": {
                   "https://registry.gitlab.com": {
