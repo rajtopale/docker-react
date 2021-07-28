@@ -22,7 +22,7 @@ jobs:
               EOF
       - aws-s3/copy:
           from: bucket/.dockercfg
-          to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react'
+          to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
 
 workflows:
   version: 2
