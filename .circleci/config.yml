@@ -1,7 +1,6 @@
 version: 2.1
 
 orbs:
-  aws-s3: circleci/aws-s3@3.0.0
   shellcheck: circleci/shellcheck@2.2.4
   aws-cli: circleci/aws-cli@2.0
 
@@ -18,58 +17,66 @@ jobs:
           version: 20.10.6
       - run: |
           TAG=0.1.$CIRCLE_BUILD_NUM
-          docker build -t $IMAGE_NAME:$TAG .
+          docker build -t $IMAGE_NAME:$TAG -f Dockerfile.dev .
           echo $DOCKER_PASS | docker login registry.gitlab.com -u $DOCKER_USER --password-stdin
           docker push $IMAGE_NAME:$TAG
-  push-config-files:
+  eb-deploy:
+    environment:
+      BUCKET_NAME: elasticbeanstalk-us-east-1-544475008658
+      IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
     docker:
       - image: cimg/base:2021.07
     steps:
-      - run: 
-          command: |
-            mkdir bucket && cat \<<EOF > bucket/dockercfg
-            {
-              "auths": {
-                "https://registry.gitlab.com": {
-                  "auth": "$DOCKER_AUTH"
-                }
+      - aws-cli/setup
+      - run: |
+          TAG=0.1.$CIRCLE_BUILD_NUM
+          mkdir bucket && cat \<<EOF > bucket/dockercfg
+          {
+            "auths": {
+              "https://registry.gitlab.com": {
+                "auth": "$DOCKER_AUTH"
               }
             }
-      - run: 
-          command: |
-            TAG=0.1.$CIRCLE_BUILD_NUM
-            cat \<<EOF > bucket/$TAG-Dockerrun.aws.json 
-            {
-              "AWSEBDockerrunVersion": "1",
-              "Authentication": {
-                "bucket": "elasticbeanstalk-us-east-1-544475008658",
-                "key": "docker-react/dockercfg"
-              },
-              "Image": {
-                "Name": "registry.gitlab.com/rajtopale/docker_registry/docker-react:$TAG"
-              },
-              "Ports": [
-                {
-                  "ContainerPort": "3000"
-                }
-              ]
-            }
-            EOF
-            ls -l bucket
-      - aws-s3/copy:
-          arguments: '--recursive'
-          from: bucket/
-          to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
+          }
+          EOF
+          cat \<<EOF > bucket/$TAG-Dockerrun.aws.json 
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Authentication": {
+              "bucket": "$BUCKET_NAME",
+              "key": "docker-react/dockercfg"
+            },
+            "Image": {
+              "Name": "$IMAGE_NAME:$TAG"
+            },
+            "Ports": [
+              {
+                "ContainerPort": "3000"
+              }
+            ]
+          }
+          EOF
+          aws s3 cp bucket/ s3://$BUCKET_NAME/docker-react --recursive
+          aws elasticbeanstalk create-application-version --application-name docker-react --version-label docker-react-$TAG --source-bundle S3Bucket=$BUCKET_NAME,S3Key=$TAG-Dockerrun.aws.json
+          aws elasticbeanstalk update-environment --environment-name Dockerreact-env --version-label docker-react-$TAG 
+
 
 workflows:
   version: 2
   elastic-beanstalk-workflow:
     jobs:
       - shellcheck/check
-      - push-config-files:
-          context: AWS
+      - build:
           requires:
             - shellcheck/check
+          filters:
+            branches:
+              only:
+                - master
+      - eb-deploy:
+          context: AWS
+          requires:
+            - build
           filters:
             branches:
               only:
