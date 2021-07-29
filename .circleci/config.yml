@@ -22,8 +22,6 @@ jobs:
           echo $DOCKER_PASS | docker login registry.gitlab.com -u $DOCKER_USER --password-stdin
           docker push $IMAGE_NAME:$TAG
   push-config-files:
-    environment:
-      TAG: 0.1.$CIRCLE_BUILD_NUM
     docker:
       - image: cimg/base:2021.07
     steps:
@@ -37,11 +35,9 @@ jobs:
                 }
               }
             }
-      - aws-s3/copy:
-          from: bucket/.dockercfg
-          to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
       - run: 
           command: |
+            TAG=0.1.$CIRCLE_BUILD_NUM
             cat \<<EOF > bucket/$TAG-Dockerrun.aws.json 
             {
               "AWSEBDockerrunVersion": "1",
@@ -61,7 +57,7 @@ jobs:
               "Logging": "/var/log/nginx"
             }
       - aws-s3/copy:
-          from: bucket/$TAG-Dockerrun.aws.json
+          from: bucket/*
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
 
 workflows:
