@@ -9,6 +9,7 @@ jobs:
     working_directory: ~/repo
     environment:
       IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
+      BUCKET_NAME: elasticbeanstalk-us-east-1-544475008658
     docker:
       - image: cimg/base:2021.07
     steps:
@@ -20,13 +21,6 @@ jobs:
           docker build -t $IMAGE_NAME:$TAG -f Dockerfile.dev .
           echo $DOCKER_PASS | docker login registry.gitlab.com -u $DOCKER_USER --password-stdin
           docker push $IMAGE_NAME:$TAG
-  eb-deploy:
-    environment:
-      BUCKET_NAME: elasticbeanstalk-us-east-1-544475008658
-      IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
-    docker:
-      - image: cimg/base:2021.07
-    steps:
       - aws-cli/setup
       - run: |
           TAG=0.1.$CIRCLE_BUILD_NUM
@@ -69,14 +63,6 @@ workflows:
       - build:
           requires:
             - shellcheck/check
-          filters:
-            branches:
-              only:
-                - master
-      - eb-deploy:
-          context: AWS
-          requires:
-            - build
           filters:
             branches:
               only:
