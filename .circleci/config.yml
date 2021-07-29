@@ -12,38 +12,36 @@ jobs:
       - run: 
           command: |
             mkdir bucket && cat \<<EOF > bucket/.dockercfg
-              {
-                "auths": {
-                  "https://registry.gitlab.com": {
-                    "auth": "$DOCKER_AUTH"
-                  }
+            {
+              "auths": {
+                "https://registry.gitlab.com": {
+                  "auth": "$DOCKER_AUTH"
                 }
               }
-              EOF
+            }
       - aws-s3/copy:
           from: bucket/.dockercfg
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
       - run: 
           command: |
             cat \<<EOF > bucket/Dockerrun.aws.json 
-              {
-                "AWSEBDockerrunVersion": "1",
-                "Authentication": {
-                  "bucket": "elasticbeanstalk-us-east-1-544475008658",
-                  "key": "docker-react/.dockercfg"
-                },
-                "Image": {
-                  "Name": "registry.gitlab.com/rajtopale/docker_registry/docker-react:0.1.4",
-                  "Update": "true"
-                },
-                "Ports": [
-                  {
-                    "ContainerPort": "3000"
-                  }
-                ],
-                "Logging": "/var/log/nginx"
-              }      
-              EOF
+            {
+              "AWSEBDockerrunVersion": "1",
+              "Authentication": {
+                "bucket": "elasticbeanstalk-us-east-1-544475008658",
+                "key": "docker-react/.dockercfg"
+              },
+              "Image": {
+                "Name": "registry.gitlab.com/rajtopale/docker_registry/docker-react:0.1.4",
+                "Update": "true"
+              },
+              "Ports": [
+                {
+                  "ContainerPort": "3000"
+                }
+              ],
+              "Logging": "/var/log/nginx"
+            }
       - aws-s3/copy:
           from: bucket/Dockerrun.aws.json
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
