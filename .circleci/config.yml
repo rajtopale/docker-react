@@ -57,7 +57,7 @@ jobs:
           }
           EOF
           aws s3 cp bucket/ s3://$BUCKET_NAME/docker-react --recursive
-          aws elasticbeanstalk create-application-version --application-name docker-react --version-label docker-react-$TAG --source-bundle S3Bucket=$BUCKET_NAME,S3Key=$TAG-Dockerrun.aws.json
+          aws elasticbeanstalk create-application-version --application-name docker-react --version-label docker-react-$TAG --source-bundle S3Bucket=$BUCKET_NAME,S3Key=docker-react/$TAG-Dockerrun.aws.json
           aws elasticbeanstalk update-environment --environment-name Dockerreact-env --version-label docker-react-$TAG 
 
 
