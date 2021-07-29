@@ -57,6 +57,7 @@ jobs:
             EOF
             ls -l bucket
       - aws-s3/copy:
+          arguments: '--recursive'
           from: bucket/
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
 
