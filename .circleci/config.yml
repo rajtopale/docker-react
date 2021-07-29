@@ -25,7 +25,7 @@ jobs:
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
       - run: 
           command: |
-            cat > bucket/.dockercfg \<<EOF
+            cat > bucket/Dockerrun.aws.json \<<EOF
               {
                 "AWSEBDockerrunVersion": "1",
                 "Authentication": {
