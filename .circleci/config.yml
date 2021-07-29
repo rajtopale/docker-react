@@ -43,21 +43,22 @@ jobs:
               "AWSEBDockerrunVersion": "1",
               "Authentication": {
                 "bucket": "elasticbeanstalk-us-east-1-544475008658",
-                "key": "docker-react/.dockercfg"
+                "key": "docker-react/dockercfg"
               },
               "Image": {
-                "Name": "registry.gitlab.com/rajtopale/docker_registry/docker-react:$TAG",
-                "Update": "true"
+                "Name": "registry.gitlab.com/rajtopale/docker_registry/docker-react:$TAG"
               },
               "Ports": [
                 {
                   "ContainerPort": "3000"
                 }
-              ],
-              "Logging": "/var/log/nginx"
+              ]
             }
       - aws-s3/copy:
-          from: bucket/*
+          arguments: |
+            --dryrun \
+            --recursive
+          from: bucket
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
 
 workflows:
