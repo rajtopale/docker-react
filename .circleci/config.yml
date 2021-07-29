@@ -54,11 +54,13 @@ jobs:
                 }
               ]
             }
+            EOF
+            ls -l bucket
       - aws-s3/copy:
           arguments: |
             --dryrun \
             --recursive
-          from: bucket
+          from: bucket/
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
 
 workflows:
