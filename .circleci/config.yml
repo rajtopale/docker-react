@@ -11,7 +11,7 @@ jobs:
     steps:
       - run: 
           command: |
-            mkdir bucket && cat > bucket/.dockercfg \<<EOF
+            mkdir bucket && cat \<<EOF > bucket/.dockercfg
               {
                 "auths": {
                   "https://registry.gitlab.com": {
@@ -25,7 +25,7 @@ jobs:
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
       - run: 
           command: |
-            cat > bucket/Dockerrun.aws.json \<<EOF
+            cat \<<EOF > bucket/Dockerrun.aws.json 
               {
                 "AWSEBDockerrunVersion": "1",
                 "Authentication": {
