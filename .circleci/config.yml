@@ -3,9 +3,27 @@ version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@3.0.0
   shellcheck: circleci/shellcheck@2.2.4
+  aws-cli: circleci/aws-cli@2.0
 
 jobs:
-  prepare-docker-file:
+  build:
+    working_directory: ~/repo
+    environment:
+      IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
+    docker:
+      - image: cimg/base:2021.07
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.6
+      - run: |
+          TAG=0.1.$CIRCLE_BUILD_NUM
+          docker build -t $IMAGE_NAME:$TAG .
+          echo $DOCKER_PASS | docker login registry.gitlab.com -u $DOCKER_USER --password-stdin
+          docker push $IMAGE_NAME:$TAG
+  push-config-files:
+    environment:
+      TAG: 0.1.$CIRCLE_BUILD_NUM
     docker:
       - image: cimg/base:2021.07
     steps:
@@ -24,7 +42,7 @@ jobs:
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
       - run: 
           command: |
-            cat \<<EOF > bucket/Dockerrun.aws.json 
+            cat \<<EOF > bucket/$TAG-Dockerrun.aws.json 
             {
               "AWSEBDockerrunVersion": "1",
               "Authentication": {
@@ -32,7 +50,7 @@ jobs:
                 "key": "docker-react/.dockercfg"
               },
               "Image": {
-                "Name": "registry.gitlab.com/rajtopale/docker_registry/docker-react:0.1.4",
+                "Name": "registry.gitlab.com/rajtopale/docker_registry/docker-react:$TAG",
                 "Update": "true"
               },
               "Ports": [
@@ -43,7 +61,7 @@ jobs:
               "Logging": "/var/log/nginx"
             }
       - aws-s3/copy:
-          from: bucket/Dockerrun.aws.json
+          from: bucket/$TAG-Dockerrun.aws.json
           to: 's3://elasticbeanstalk-us-east-1-544475008658/docker-react/'
 
 workflows:
@@ -51,7 +69,7 @@ workflows:
   elastic-beanstalk-workflow:
     jobs:
       - shellcheck/check
-      - prepare-docker-file:
+      - push-config-files:
           context: AWS
           requires:
             - shellcheck/check
