@@ -14,6 +14,9 @@ jobs:
       - image: cimg/base:2021.07
     steps:
       - checkout
+      - run:
+          name: Compute version number
+          command: echo "0.1.${CIRCLE_BUILD_NUM}" | tee version.txt
       - setup_remote_docker:
           version: 20.10.6
       - run: |
@@ -21,10 +24,23 @@ jobs:
           docker build -t $IMAGE_NAME:$TAG -f Dockerfile.dev .
           echo $DOCKER_PASS | docker login registry.gitlab.com -u $DOCKER_USER --password-stdin
           docker push $IMAGE_NAME:$TAG
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  eb-deploy:
+    environment:
+      BUCKET_NAME: elasticbeanstalk-us-east-1-544475008658
+      IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
+    docker:
+      - image: cimg/base:2021.07
+    steps:
+      - attach_workspace:
+          at: .
       - aws-cli/setup
       - run: |
-          TAG=0.1.$CIRCLE_BUILD_NUM
-          mkdir bucket && cat \<<EOF > bucket/dockercfg
+          TAG=$(<version.txt)
+          cat \<<EOF > dockercfg
           {
             "auths": {
               "https://registry.gitlab.com": {
@@ -67,6 +83,10 @@ workflows:
             branches:
               only:
                 - master
+      - eb-deploy:
+          context: AWS
+          requires:
+            - build
           
 
 
