@@ -39,7 +39,8 @@ jobs:
       - aws-cli/setup
       - run: |
           TAG=$(<version.txt)
-          cat \<<EOF > dockercfg
+          mkdir eb_bucket
+          cat \<<EOF > eb_bucket/dockercfg
           {
             "auths": {
               "https://registry.gitlab.com": {
@@ -48,7 +49,7 @@ jobs:
             }
           }
           EOF
-          cat \<<EOF > $TAG-Dockerrun.aws.json 
+          cat \<<EOF > eb_bucket/$TAG-Dockerrun.aws.json 
           {
             "AWSEBDockerrunVersion": "1",
             "Authentication": {
@@ -65,9 +66,7 @@ jobs:
             ]
           }
           EOF
-          pwd
-          ls -l
-          aws s3 cp . s3://$BUCKET_NAME/docker-react --recursive
+          aws s3 cp eb_bucket/ s3://$BUCKET_NAME/docker-react --recursive
           aws elasticbeanstalk create-application-version --application-name docker-react --version-label docker-react-$TAG --source-bundle S3Bucket=$BUCKET_NAME,S3Key=docker-react/$TAG-Dockerrun.aws.json
           aws elasticbeanstalk update-environment --environment-name Dockerreact-env --version-label docker-react-$TAG 
 
