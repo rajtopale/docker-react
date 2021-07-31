@@ -6,7 +6,6 @@ orbs:
 
 jobs:
   build:
-    working_directory: ~/repo
     environment:
       IMAGE_NAME: registry.gitlab.com/rajtopale/docker_registry/docker-react
       BUCKET_NAME: elasticbeanstalk-us-east-1-544475008658
@@ -49,7 +48,7 @@ jobs:
             }
           }
           EOF
-          cat \<<EOF > bucket/$TAG-Dockerrun.aws.json 
+          cat \<<EOF > $TAG-Dockerrun.aws.json 
           {
             "AWSEBDockerrunVersion": "1",
             "Authentication": {
@@ -66,7 +65,9 @@ jobs:
             ]
           }
           EOF
-          aws s3 cp bucket/ s3://$BUCKET_NAME/docker-react --recursive
+          pwd
+          ls -l
+          aws s3 cp . s3://$BUCKET_NAME/docker-react --recursive
           aws elasticbeanstalk create-application-version --application-name docker-react --version-label docker-react-$TAG --source-bundle S3Bucket=$BUCKET_NAME,S3Key=docker-react/$TAG-Dockerrun.aws.json
           aws elasticbeanstalk update-environment --environment-name Dockerreact-env --version-label docker-react-$TAG 
 
